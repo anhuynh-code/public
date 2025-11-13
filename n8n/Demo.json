@@ -1,0 +1,269 @@
+{
+  "name": "CSV fetch → filter → email",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "daf3fce1-23f8-4092-8dd4-4e814d328115",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        816,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/anhuynh-code/public/3b61d38a64b0c34b01e47eec39bea60c0f8cc464/glassdoor_jobs.csv",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "cd3c9762-9fef-4679-ae4f-154146106efe",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1024,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "de2cbaa9-4148-476c-bf95-c40e52d4ff02",
+      "name": "Spreadsheet File",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "Job Title",
+              "value": "={{$json[\"Job Title\"]}}"
+            },
+            {
+              "name": "Company Name",
+              "value": "={{$json[\"Company Name\"]}}"
+            },
+            {
+              "name": "Location",
+              "value": "={{$json[\"Location\"]}}"
+            },
+            {
+              "name": "Salary Estimate",
+              "value": "={{$json[\"Salary Estimate\"]}}"
+            },
+            {
+              "name": "Job Description",
+              "value": "={{$json[\"Job Description\"]}}"
+            },
+            {
+              "name": "title_norm",
+              "value": "={{$json[\"title_norm\"]}}"
+            }
+          ],
+          "number": [
+            {
+              "name": "rating",
+              "value": "={{$json[\"rating\"]}}"
+            },
+            {
+              "name": "founded",
+              "value": "={{$json[\"founded\"]}}"
+            },
+            {
+              "name": "competitors",
+              "value": "={{$json[\"competitors\"]}}"
+            },
+            {
+              "name": "skill_python",
+              "value": "={{$json[\"skill_python\"]}}"
+            },
+            {
+              "name": "skill_sql",
+              "value": "={{$json[\"skill_sql\"]}}"
+            },
+            {
+              "name": "skill_tableau",
+              "value": "={{$json[\"skill_tableau\"]}}"
+            },
+            {
+              "name": "skill_tensorflow",
+              "value": "={{$json[\"skill_tensorflow\"]}}"
+            },
+            {
+              "name": "skill_keras",
+              "value": "={{ $json.skill_keras }}"
+            },
+            {
+              "name": "skill_sklearn",
+              "value": "={{ $json.skill_sklearn }}"
+            }
+          ]
+        },
+        "options": {
+          "dotNotation": true
+        }
+      },
+      "id": "8a60723b-a391-4618-b279-f5b3226dd4c9",
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "anhuynh1996@yahoo.com",
+        "toEmail": "anhuynh1996@yahoo.com",
+        "subject": "Glassdoor Job Report",
+        "text": "Attached is the latest cleaned Glassdoor dataset with title normalization and skill flags (Python, SQL, Tableau, etc).",
+        "options": {
+          "attachments": "finalCsv"
+        }
+      },
+      "id": "1632ff14-655e-4b8e-8771-45581d9d10fb",
+      "name": "Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        48
+      ],
+      "webhookId": "99639758-7e59-4e59-97fe-9a24f51bcb01",
+      "credentials": {
+        "smtp": {
+          "id": "Hx1YcyfvT0QfDVBK",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// This node receives an array of items like [{json: {...row}}, ...]\n// We’ll normalize title + pull out skill flags + clean a few fields.\n\nfunction titleCleaner(title = \"\") {\n  const t = title.toLowerCase();\n  if (t.includes(\"data scientist\")) return \"data scientist\";\n  if (t.includes(\"data engineer\")) return \"data engineer\";\n  if (t.includes(\"machine learning\") || t.includes(\"ml engineer\") || t.includes(\"mle\")) return \"mle\";\n  if (t.includes(\"manager\")) return \"manager\";\n  return \"other\";\n}\n\nfunction yesNo(regex, text=\"\") {\n  return regex.test(text.toLowerCase()) ? 1 : 0;\n}\n\nreturn items.map(({ json }) => {\n  const desc = (json[\"Job Description\"] || \"\").toString();\n\n  // Clean numeric-ish columns\n  const rating = Number((json[\"Rating\"] ?? \"\").toString().replace(/[^0-9.]/g, \"\"));\n  const founded = Number((json[\"Founded\"] ?? \"\").toString().replace(/[^0-9]/g, \"\"));\n  const competitors = Number((json[\"Competitors\"] ?? \"\").toString().replace(/[^0-9-]/g, \"\"));\n\n  // Normalize title\n  const normTitle = titleCleaner(json[\"Job Title\"] || \"\");\n\n  // Skill flags\n  const hasPython = yesNo(/python/, desc);\n  const hasSQL = yesNo(/\\bsql\\b/, desc);\n  const hasTableau = yesNo(/tableau/, desc);\n  const hasTensorFlow = yesNo(/tensorflow/, desc);\n  const hasKeras = yesNo(/keras/, desc);\n  const hasSklearn = yesNo(/scikit-learn|sklearn/, desc);\n\n  return {\n    json: {\n      // keep originals you care about\n      \"Job Title\": json[\"Job Title\"],\n      \"Company Name\": (json[\"Company Name\"] || \"\").toString().replace(/\\n.*/,\"\").trim(),\n      \"Location\": json[\"Location\"],\n      \"Salary Estimate\": json[\"Salary Estimate\"],\n      \"Job Description\": desc,\n\n      // cleaned/derived\n      rating: Number.isFinite(rating) ? rating : null,\n      founded: Number.isFinite(founded) ? founded : null,\n      competitors: Number.isFinite(competitors) ? competitors : null,\n      title_norm: normTitle,\n\n      // skills\n      skill_python: hasPython,\n      skill_sql: hasSQL,\n      skill_tableau: hasTableau,\n      skill_tensorflow: hasTensorFlow,\n      skill_keras: hasKeras,\n      skill_sklearn: hasSklearn,\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        48
+      ],
+      "id": "e20a4d4c-0164-4e3d-8848-4e4b80e0ca8a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "toFile",
+        "fileFormat": "csv",
+        "binaryPropertyName": "finalCsv",
+        "options": {
+          "fileName": "cleaned_glassdoor_jobs.csv",
+          "headerRow": true
+        }
+      },
+      "id": "bd05fea6-4d38-497b-a3a9-17989a89a736",
+      "name": "Spreadsheet File (Write)",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        48
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Spreadsheet File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Spreadsheet File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set": {
+      "main": [
+        [
+          {
+            "node": "Spreadsheet File (Write)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Spreadsheet File (Write)": {
+      "main": [
+        [
+          {
+            "node": "Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4122f7d7-9d0c-4b7a-a857-e589937eaa6f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "587954c8af199b4edf092e25beb6fec2ceb91de2324787c81665cb980ac9d614"
+  },
+  "id": "JWEO662SrKlPDtta",
+  "tags": []
+}
