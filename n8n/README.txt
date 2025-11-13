@@ -1,60 +1,67 @@
-n8n Automation Demo
+# n8n Automation Demo
 
-This project demonstrates how I use n8n to build automated data workflows for ETL-style tasks.  
-The example workflow ingests job listings data, performs cleaning and transformation steps, and exports structured outputs.
+This workflow demonstrates a complete ETL-style automation using **n8n**, including:
 
----
+- data ingestion from an external source  
+- parsing and normalization  
+- JavaScript-based cleaning and enrichment  
+- schema enforcement  
+- CSV export  
+- email delivery of processed results  
 
-Workflow Overview
-
-The `Demo.json` file contains an n8n workflow that performs:
-
-1. Data Ingestion
-- Loads job posting data from CSV
-- Normalizes fields for downstream use
-
-2. Data Cleaning
-- Removes malformed rows  
-- Standardizes company and job title fields  
-- Cleans salary strings and extracts numeric ranges  
-
-3. Transformations
-- Converts salary text to numeric columns  
-- Maps roles to categories  
-- Adds derived fields for analysis  
-
-4. EDA Output
-- Saves exploratory data files (`eda_data.csv`)
-- Generates cleaned datasets for modeling or dashboards  
-
-5. Automation Flow
-- Fully reproducible workflow via n8n JSON  
-- Can be imported into any n8n instance
+This example is based on publicly available Glassdoor job listings and uses no sensitive data.
 
 ---
 
-Files
+## 🚀 Workflow Components
 
-- Demo.json — Complete n8n workflow  
-- glassdoor_jobs.csv — Raw sample data  
-- cleaned_glassdoor_jobs.csv — Post-cleaning dataset  
-- salary_data_cleaned.csv — Salary extraction example  
-- eda_data.csv — EDA-ready table
+### 1. **HTTP Request**
+Fetches a CSV file from GitHub in binary format for processing.
+
+### 2. **Spreadsheet File (Read)**
+Parses the CSV into structured JSON rows.
+
+### 3. **JavaScript Code Node**
+Performs:
+- title normalization  
+- numeric cleaning  
+- regex-based skill extraction  
+- category grouping  
+- derived feature creation  
+
+### 4. **Set Node**
+Defines the output schema and applies consistent field naming.
+
+### 5. **Spreadsheet File (Write)**
+Generates a cleaned CSV (`cleaned_glassdoor_jobs.csv`) for downstream use.
+
+### 6. **Email Send**
+Sends an automated email with the cleaned dataset attached.
 
 ---
 
-Why This Matters
+## 💡 Skills Demonstrated
 
-This demo shows my ability to design:
-- No-code/low-code automation  
-- ETL-style workflows  
-- Data cleaning and validation pipelines  
-- Reproducible transformations  
-- Multi-step orchestration without manual intervention  
+- ETL pipeline design  
+- data cleaning and validation  
+- workflow orchestration  
+- automation logic  
+- schema enforcement  
+- email/SMTP integration  
+- JavaScript transformation in n8n  
 
-These patterns extend naturally to:
-- test automation  
-- ETL pipelines  
-- BI data preparation  
-- API workflows  
-- operational analytics  
+---
+
+## 🛠️ Files in This Folder
+
+- **Demo.json** — n8n workflow export  
+- **glassdoor_jobs.csv** — source data  
+- **cleaned_glassdoor_jobs.csv** — cleaned output  
+- **eda_data.csv** — exploratory data output  
+- **salary_data_cleaned.csv** — salary parsing example  
+
+---
+
+## 📌 Notes
+
+This demo is part of a personal technical portfolio to illustrate automation, workflow design, and reproducible ETL patterns.
