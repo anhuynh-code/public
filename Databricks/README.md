@@ -126,5 +126,5 @@ Fully runnable on **Databricks Community Edition**.
 ---
 
 ## 🙌 Author  
-**Anh Nhat Huynh**  
+**Anh Huynh**  
 Senior Data Analytics Engineer / Scientist  
